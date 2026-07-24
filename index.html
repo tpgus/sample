@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>연산 연습지 생성기</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="controls no-print">
+    <h1>연산 연습지 생성기</h1>
+    <p class="hint">
+      덧셈·뺄셈 각각 2자리 20문제 · 3자리 20문제 · 4자리 20문제 · 5자리 5문제 · 혼합자릿수(2~4자리) 20문제 — 문제 페이지 + 정답 페이지 자동 생성
+    </p>
+    <div class="button-row">
+      <button id="generateBtn">문제 생성</button>
+      <button id="printBtn">인쇄하기</button>
+    </div>
+  </div>
+
+  <div id="addQuestionPage" class="worksheet"></div>
+  <div id="addAnswerPage" class="worksheet page-break"></div>
+  <div id="subQuestionPage" class="worksheet page-break"></div>
+  <div id="subAnswerPage" class="worksheet page-break"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
