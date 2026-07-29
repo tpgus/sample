@@ -107,6 +107,87 @@ body {
   white-space: nowrap;
 }
 
+/* Fraction / percent / decimal conversion table */
+
+.worksheet-title {
+  text-align: center;
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.worksheet-subtitle {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+
+.frac-table-container {
+  display: flex;
+  justify-content: center;
+  gap: 6mm;
+}
+
+.frac-table-container .frac-table {
+  min-width: 0;
+}
+
+.frac-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.frac-table th,
+.frac-table td {
+  border: 1px solid #999;
+  padding: 3.2px 6px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.frac-table th {
+  background-color: #2c3e50;
+  color: white;
+  font-weight: 600;
+}
+
+.frac-table td.frac {
+  font-weight: 700;
+  background-color: #f4f6f8;
+  width: 26%;
+}
+
+.frac-table .fraction {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+.frac-table .fraction .num {
+  display: block;
+  padding: 0 3px 1px 3px;
+  border-bottom: 1.4px solid #1a1a1a;
+}
+
+.frac-table .fraction .den {
+  display: block;
+  padding: 1px 3px 0 3px;
+}
+
+.frac-table td.percent,
+.frac-table td.decimal {
+  width: 37%;
+  height: 20px;
+}
+
+.frac-table tr:nth-child(even) td:not(.frac) {
+  background-color: #fafafa;
+}
+
 /* Print styles */
 @page {
   size: A4 portrait;
