@@ -17,81 +17,11 @@ function shuffle(arr) {
   return arr;
 }
 
-// Picks a digit-length for each operand, optionally forcing them to differ.
-function pickDigitPair(minDigits, maxDigits, forceDifferentDigits) {
-  let d1, d2;
-  let attempts = 0;
-  do {
-    d1 = randomInt(minDigits, maxDigits);
-    d2 = randomInt(minDigits, maxDigits);
-    attempts++;
-  } while (forceDifferentDigits && d1 === d2 && minDigits !== maxDigits && attempts < 30);
-  return [d1, d2];
+const MAX_ATTEMPTS_PER_PROBLEM = 800;
+
+function formatNumber(n) {
+  return n.toLocaleString("en-US");
 }
-
-// Whether adding a and b requires carrying at any digit place.
-function hasCarry(a, b) {
-  let x = a;
-  let y = b;
-  let carry = 0;
-  while (x > 0 || y > 0) {
-    const sum = (x % 10) + (y % 10) + carry;
-    carry = sum >= 10 ? 1 : 0;
-    if (carry) return true;
-    x = Math.floor(x / 10);
-    y = Math.floor(y / 10);
-  }
-  return false;
-}
-
-// Whether subtracting b from a requires borrowing at any digit place.
-function hasBorrow(a, b) {
-  let x = a;
-  let y = b;
-  let borrow = 0;
-  while (x > 0 || y > 0) {
-    const dx = x % 10;
-    const dy = (y % 10) + borrow;
-    if (dx < dy) {
-      return true;
-    }
-    borrow = 0;
-    x = Math.floor(x / 10);
-    y = Math.floor(y / 10);
-  }
-  return false;
-}
-
-function generateAdditionProblem(minDigits, maxDigits, forceDifferentDigits) {
-  const [d1, d2] = pickDigitPair(minDigits, maxDigits, forceDifferentDigits);
-  const a = randomOperand(d1);
-  const b = randomOperand(d2);
-  return { a, b, answer: a + b, symbol: "+" };
-}
-
-// Always subtracts the smaller value from the larger so the result stays non-negative.
-function generateSubtractionProblem(minDigits, maxDigits, forceDifferentDigits) {
-  const [d1, d2] = pickDigitPair(minDigits, maxDigits, forceDifferentDigits);
-  const v1 = randomOperand(d1);
-  let v2 = randomOperand(d2);
-  let a = Math.max(v1, v2);
-  let b = Math.min(v1, v2);
-
-  let guard = 0;
-  while (a === b && guard < 30) {
-    v2 = randomOperand(d2);
-    a = Math.max(v1, v2);
-    b = Math.min(v1, v2);
-    guard++;
-  }
-
-  return { a, b, answer: a - b, symbol: "-" };
-}
-
-const OPERATIONS = {
-  add: { generate: generateAdditionProblem, hasDifficulty: hasCarry },
-  sub: { generate: generateSubtractionProblem, hasDifficulty: hasBorrow },
-};
 
 // Rejects numbers that make mental multiplication too easy (trailing zero, repeated digit).
 function isTooEasyOperand(n) {
@@ -234,55 +164,6 @@ function buildComparisonProblemSet() {
   }));
 }
 
-// 30% 쉬움(받아올림/받아내림 없음) / 70% 중상(있음) 비율로 문제를 채운다.
-const EASY_RATIO = 0.3;
-const MAX_ATTEMPTS_PER_PROBLEM = 800;
-
-function generateSectionProblems(section, operation) {
-  const { minDigits, maxDigits, count, forceDifferentDigits } = section;
-  const easyCount = Math.round(count * EASY_RATIO);
-  const wantHardFlags = shuffle([
-    ...Array(easyCount).fill(false),
-    ...Array(count - easyCount).fill(true),
-  ]);
-
-  const seen = new Set();
-  const problems = [];
-
-  for (const wantHard of wantHardFlags) {
-    let problem = null;
-    for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_PROBLEM; attempt++) {
-      const candidate = operation.generate(minDigits, maxDigits, forceDifferentDigits);
-      if (operation.hasDifficulty(candidate.a, candidate.b) !== wantHard) continue;
-      const key = `${candidate.a}${candidate.symbol}${candidate.b}`;
-      if (seen.has(key) && attempt < MAX_ATTEMPTS_PER_PROBLEM - 1) continue;
-      seen.add(key);
-      problem = candidate;
-      break;
-    }
-    problems.push(problem || operation.generate(minDigits, maxDigits, forceDifferentDigits));
-  }
-
-  return problems;
-}
-
-// Fixed worksheet spec: 2/3/4-digit x20, 5-digit x5, mixed 2~4-digit x20
-const SECTIONS = [
-  { minDigits: 2, maxDigits: 2, count: 20, columns: 4, forceDifferentDigits: false },
-  { minDigits: 3, maxDigits: 3, count: 20, columns: 4, forceDifferentDigits: false },
-  { minDigits: 4, maxDigits: 4, count: 20, columns: 3, forceDifferentDigits: false },
-  { minDigits: 5, maxDigits: 5, count: 5, columns: 2, forceDifferentDigits: false },
-  { minDigits: 2, maxDigits: 4, count: 20, columns: 3, forceDifferentDigits: true },
-];
-
-function buildProblemSet(opKey) {
-  const operation = OPERATIONS[opKey];
-  return SECTIONS.map((section) => ({
-    columns: section.columns,
-    problems: generateSectionProblems(section, operation),
-  }));
-}
-
 function renderPage(container, problemSet, formatItem) {
   container.innerHTML = problemSet
     .map(({ columns, problems }) => {
@@ -294,27 +175,222 @@ function renderPage(container, problemSet, formatItem) {
     .join("");
 }
 
-function formatNumber(n) {
-  return n.toLocaleString("en-US");
-}
-
-const questionFormatter = (p) => `${formatNumber(p.a)} ${p.symbol} ${formatNumber(p.b)} = ______`;
-const answerFormatter = (p) => formatNumber(p.answer);
-
 const compareQuestionFormatter = (p) =>
   `${formatNumber(p.la)} × ${formatNumber(p.lb)} <span class="compare-blank"></span> ${formatNumber(p.ra)} × ${formatNumber(p.rb)}`;
 const compareAnswerFormatter = (p) =>
   `${formatNumber(p.la)} × ${formatNumber(p.lb)} <span class="compare-symbol">${p.symbol}</span> ${formatNumber(p.ra)} × ${formatNumber(p.rb)}`;
 
+// ---------------------------------------------------------------------------
+// NCS-style data-interpretation table: fill in blank cells using the row/column
+// totals already printed in the table (add up what's known, subtract from the
+// total). Digit lengths lean toward 3~4 digits, with 2 and 5 digits as the
+// occasional edges.
+// ---------------------------------------------------------------------------
+
+// Real data tables don't mix a 1-digit cell with a 5-digit cell in the same
+// column — every entry sits near the same order of magnitude. Jittering by
+// *digit length* doesn't model that well (each step up is a ~10x jump in
+// average value, so even a modest jump chance skews sums badly). Instead each
+// table rolls one "pivot" value (mostly 3-digit, occasionally 2 or 4, rarely
+// 5), and every cell is that pivot times a modest random multiplier — so
+// values drift smoothly around the same order of magnitude instead of
+// hopping between digit tiers.
+function pickBaseDigitLength() {
+  const r = Math.random();
+  if (r < 0.35) return 2;
+  if (r < 0.975) return 3;
+  if (r < 0.997) return 4;
+  return 5;
+}
+
+function randomMagnitudeFactor(wide) {
+  const [lo, hi] = wide ? [0.15, 3.5] : [0.45, 2.0];
+  const logMin = Math.log(lo);
+  const logMax = Math.log(hi);
+  return Math.exp(logMin + Math.random() * (logMax - logMin));
+}
+
+// A per-cell 6% chance of a wide swing sounds rare, but a 5x5 table has 25
+// cells — at that rate almost every table would roll one somewhere. Wide
+// jitter is only ever offered to a single pre-chosen cell (picked once per
+// table), so the "occasional 1-digit next to 5-digit" case stays occasional
+// at the table level instead of compounding into "almost always."
+function randomTableValue(pivot, allowWideJitter) {
+  const magnitude = Math.min(99999, Math.max(1, Math.round(pivot * randomMagnitudeFactor(allowWideJitter))));
+  return Math.random() < 0.2 ? -magnitude : magnitude;
+}
+
+// Row/column header themes spanning several NCS-style domains (social, economic,
+// cultural, ...). Each pair has 5 labels so it works for tables up to 5x5; a pair
+// is sometimes transposed (row<->col) for extra variety.
+const THEME_PAIRS = [
+  { row: ["서울", "부산", "대구", "인천", "광주"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["기업 A", "기업 B", "기업 C", "기업 D", "기업 E"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["초졸이하", "중졸", "고졸", "대졸", "대학원졸"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["한국", "미국", "일본", "중국", "독일"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["10대", "20대", "30대", "40대", "50대"], col: ["서울", "경기", "부산", "대구", "인천"] },
+  { row: ["0~200만원", "200~400만원", "400~600만원", "600~800만원", "800만원이상"], col: ["A도", "B도", "C도", "D도", "E도"] },
+  { row: ["제조업", "서비스업", "건설업", "농업", "금융업"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["응시자 A", "응시자 B", "응시자 C", "응시자 D", "응시자 E"], col: ["언어", "수리", "자료해석", "상황판단", "직무능력"] },
+  { row: ["영업부", "기획부", "개발부", "총무부", "인사부"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["강남점", "홍대점", "신촌점", "잠실점", "여의도점"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["드라마", "코미디", "액션", "SF", "다큐멘터리"], col: ["2019", "2020", "2021", "2022", "2023"] },
+  { row: ["0~10", "11~20", "21~30", "31~40", "40~"], col: ["A도", "B도", "C도", "D도", "E도"] },
+];
+
+function pickTheme(n) {
+  const theme = THEME_PAIRS[randomInt(0, THEME_PAIRS.length - 1)];
+  const swap = Math.random() < 0.5;
+  return {
+    rowHeaders: (swap ? theme.col : theme.row).slice(0, n),
+    colHeaders: (swap ? theme.row : theme.col).slice(0, n),
+  };
+}
+
+// Builds the (n+1)x(n+1) grid: rows/cols 0..n-1 are data, row n and col n are
+// totals, and grid[n][n] is the grand total (row-n's own "row total" is the sum
+// of the column totals, which equals the sum of the row totals by construction).
+function buildDataGrid(n) {
+  const pivot = randomOperand(pickBaseDigitLength());
+  const m = n + 1;
+  const hasOutlier = Math.random() < 0.06;
+  const outlierRow = hasOutlier ? randomInt(0, n - 1) : -1;
+  const outlierCol = hasOutlier ? randomInt(0, n - 1) : -1;
+  const grid = Array.from({ length: m }, () => Array(m).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      grid[i][j] = randomTableValue(pivot, i === outlierRow && j === outlierCol);
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    grid[i][n] = grid[i].slice(0, n).reduce((a, b) => a + b, 0);
+  }
+  for (let j = 0; j <= n; j++) {
+    let sum = 0;
+    for (let i = 0; i < n; i++) sum += grid[i][j];
+    grid[n][j] = sum;
+  }
+  return grid;
+}
+
+// A blank cell is solvable once it is the only remaining unknown in its row or
+// column (then the row/column total pins it down). Simulates that cascade to
+// confirm a candidate blank set is fully solvable, without leaving any cell
+// stuck behind two-or-more simultaneous unknowns in every equation touching it.
+function isBlankSetSolvable(m, blankSet) {
+  const unresolved = new Set(blankSet);
+  let changed = true;
+  while (changed && unresolved.size > 0) {
+    changed = false;
+    for (let r = 0; r < m; r++) {
+      let count = 0;
+      let last = null;
+      for (let c = 0; c < m; c++) {
+        const key = `${r}-${c}`;
+        if (unresolved.has(key)) {
+          count++;
+          last = key;
+        }
+      }
+      if (count === 1) {
+        unresolved.delete(last);
+        changed = true;
+      }
+    }
+    for (let c = 0; c < m; c++) {
+      let count = 0;
+      let last = null;
+      for (let r = 0; r < m; r++) {
+        const key = `${r}-${c}`;
+        if (unresolved.has(key)) {
+          count++;
+          last = key;
+        }
+      }
+      if (count === 1) {
+        unresolved.delete(last);
+        changed = true;
+      }
+    }
+  }
+  return unresolved.size === 0;
+}
+
+// Picks a blank set that isn't limited to one-per-row/column: some rows or
+// columns may carry two or more blanks, as long as the whole set still
+// resolves via cascading row/column totals. Falls back to the always-solvable
+// one-per-row-and-column pattern if random attempts don't pan out.
+function pickBlankSet(n, targetCount) {
+  const m = n + 1;
+  const allCells = [];
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < m; j++) allCells.push(`${i}-${j}`);
+  }
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const candidate = new Set(shuffle([...allCells]).slice(0, targetCount));
+    if (isBlankSetSolvable(m, candidate)) return candidate;
+  }
+  const perm = shuffle([...Array(n).keys()]);
+  return new Set(perm.map((col, row) => `${row}-${col}`));
+}
+
+function generateDataTable(n) {
+  const grid = buildDataGrid(n);
+  const targetBlanks = randomInt(n + 2, 2 * n + 1);
+  const blanks = pickBlankSet(n, targetBlanks);
+  const { rowHeaders, colHeaders } = pickTheme(n);
+  return { n, m: n + 1, grid, blanks, rowHeaders, colHeaders };
+}
+
+function buildDataTableProblemSet(count) {
+  return Array.from({ length: count }, () => generateDataTable(randomInt(3, 5)));
+}
+
+function renderDataCell(value, isBlank, showAnswers, extraClass) {
+  const cls = [extraClass, isBlank ? "dt-blank" : ""].filter(Boolean).join(" ");
+  if (!isBlank) return `<td class="${cls}">${formatNumber(value)}</td>`;
+  const content = showAnswers ? `<span class="dt-answer">${formatNumber(value)}</span>` : "";
+  return `<td class="${cls}">${content}</td>`;
+}
+
+function renderDataTable(problem, index, showAnswers) {
+  const { n, m, grid, blanks, rowHeaders, colHeaders } = problem;
+
+  const headCells = colHeaders.map((h) => `<th>${h}</th>`).join("");
+  const bodyRows = [];
+  for (let i = 0; i < m; i++) {
+    const isTotalRow = i === n;
+    let rowHtml = `<tr><th class="dt-rowhead">${isTotalRow ? "계" : rowHeaders[i]}</th>`;
+    for (let j = 0; j < m; j++) {
+      const isTotalCol = j === n;
+      const isBlank = blanks.has(`${i}-${j}`);
+      const cls = isTotalRow || isTotalCol ? "dt-total" : "";
+      rowHtml += renderDataCell(grid[i][j], isBlank, showAnswers, cls);
+    }
+    rowHtml += `</tr>`;
+    bodyRows.push(rowHtml);
+  }
+
+  return `
+    <div class="dt-block">
+      <div class="dt-label">문제 ${index}</div>
+      <table class="data-table">
+        <thead><tr><th></th>${headCells}<th>합</th></tr></thead>
+        <tbody>${bodyRows.join("")}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderDataTablePage(container, problems, showAnswers) {
+  container.innerHTML = problems.map((p, i) => renderDataTable(p, i + 1, showAnswers)).join("");
+}
+
 function generateAndRender() {
-  const addSet = buildProblemSet("add");
-  const subSet = buildProblemSet("sub");
+  const dataProblems = buildDataTableProblemSet(10);
   const compareSet = buildComparisonProblemSet();
 
-  renderPage(document.getElementById("addQuestionPage"), addSet, questionFormatter);
-  renderPage(document.getElementById("addAnswerPage"), addSet, answerFormatter);
-  renderPage(document.getElementById("subQuestionPage"), subSet, questionFormatter);
-  renderPage(document.getElementById("subAnswerPage"), subSet, answerFormatter);
+  renderDataTablePage(document.getElementById("dataQuestionPage"), dataProblems, false);
+  renderDataTablePage(document.getElementById("dataAnswerPage"), dataProblems, true);
   renderPage(document.getElementById("compareQuestionPage"), compareSet, compareQuestionFormatter);
   renderPage(document.getElementById("compareAnswerPage"), compareSet, compareAnswerFormatter);
 }
