@@ -107,6 +107,27 @@ body {
   white-space: nowrap;
 }
 
+/* Multiplication size-comparison items */
+
+.compare-blank {
+  display: inline-block;
+  width: 22px;
+  height: 15px;
+  border: 1px solid var(--text);
+  border-radius: 3px;
+  vertical-align: middle;
+  margin: 0 6px;
+}
+
+.compare-symbol {
+  display: inline-block;
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 6px;
+}
+
 /* Fraction / percent / decimal conversion table */
 
 .worksheet-title {
