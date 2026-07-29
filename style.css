@@ -128,6 +128,21 @@ body {
   margin: 0 6px;
 }
 
+.compare-hint {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  background: #f4f5f7;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 0 0 12px;
+}
+
+.compare-hint strong {
+  color: var(--text);
+}
+
 /* Fraction / percent / decimal conversion table */
 
 .worksheet-title {
