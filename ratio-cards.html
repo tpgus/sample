@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>분수·비율 암기 카드</title>
+<style>
+  :root {
+    --border: #d0d0d0;
+    --text: #222;
+    --muted: #777;
+    --accent: #2f6fed;
+    --bg: #f4f5f7;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+    color: var(--text);
+    margin: 0;
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100%;
+    padding: 16px 16px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  header h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .back-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .back-link:hover {
+    color: var(--accent);
+  }
+
+  /* Settings panel */
+
+  .settings {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .setting-label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    min-height: 36px;
+  }
+
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .toggle input {
+    width: 18px;
+    height: 18px;
+  }
+
+  .start-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 40px;
+  }
+
+  .start-btn:hover {
+    background: #2559c9;
+  }
+
+  /* Card area */
+
+  .card-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 14px;
+  }
+
+  .card-topbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .settings-link {
+    font-size: 12px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 0;
+  }
+
+  .settings-link:hover {
+    color: var(--accent);
+  }
+
+  .progress {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .card {
+    width: 100%;
+    flex: 1;
+    min-height: 260px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  .card:active {
+    transform: scale(0.98);
+  }
+
+  .card.is-answer {
+    background: #f4f8ff;
+    border-color: var(--accent);
+  }
+
+  .card-kicker {
+    position: absolute;
+    margin-top: -140px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: clamp(40px, 12vw, 64px);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .card-fraction .num {
+    padding: 0 10px 6px;
+    border-bottom: 3px solid var(--text);
+  }
+
+  .card-fraction .den {
+    padding: 6px 10px 0;
+  }
+
+  .card-percent {
+    font-size: clamp(36px, 10vw, 56px);
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .card-decimal {
+    font-size: clamp(18px, 5vw, 24px);
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .card-label {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .card-hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .nav-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .nav-row button {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  .nav-row button:hover {
+    background: #eee;
+  }
+
+  .nav-row button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .nav-row button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .nav-row button.primary:hover {
+    background: #2559c9;
+  }
+
+  .done-panel {
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .done-panel p {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 6px 0 18px;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (max-width: 360px) {
+    .card-fraction { font-size: 44px; }
+    .card-percent { font-size: 38px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>분수·비율 암기 카드</h1>
+    <a class="back-link" href="index.html">← 연습지 생성기</a>
+  </header>
+
+  <div class="settings" id="settingsPanel">
+    <div>
+      <span class="setting-label">범위</span>
+      <div class="chip-row" id="rangeChips">
+        <button class="chip active" data-range="2-10">1/2~1/10</button>
+        <button class="chip" data-range="11-20">1/11~1/20</button>
+        <button class="chip" data-range="21-30">1/21~1/30</button>
+        <button class="chip" data-range="31-40">1/31~1/40</button>
+        <button class="chip" data-range="2-40">전체(1/2~1/40)</button>
+      </div>
+    </div>
+    <div>
+      <span class="setting-label">방향</span>
+      <div class="chip-row" id="directionChips">
+        <button class="chip active" data-dir="f2r">분수 → 비율</button>
+        <button class="chip" data-dir="r2f">비율 → 분수</button>
+      </div>
+    </div>
+    <div class="toggle-group">
+      <label class="toggle"><input type="checkbox" id="shuffleToggle" checked /> 랜덤 섞기</label>
+      <button class="start-btn" id="startBtn">시작하기</button>
+    </div>
+  </div>
+
+  <div class="card-area" id="cardArea" hidden>
+    <div class="card-topbar">
+      <button class="settings-link" id="backToSettingsBtn">⚙ 설정 변경</button>
+      <div class="progress" id="progress">1 / 9</div>
+    </div>
+
+    <div class="card" id="card">
+      <div class="card-content" id="cardContent"></div>
+    </div>
+    <p class="card-hint" id="cardHint">카드를 탭하면 정답이 나와요</p>
+
+    <div class="nav-row">
+      <button id="prevBtn">← 이전</button>
+      <button id="nextBtn" class="primary">다음 →</button>
+    </div>
+  </div>
+
+  <div class="card-area" id="donePanel" hidden>
+    <div class="done-panel">
+      <h2>수고했어요! 🎉</h2>
+      <p>선택한 범위를 모두 확인했어요.</p>
+      <div class="nav-row">
+        <button id="restartBtn" class="primary">다시 하기</button>
+        <button id="changeSettingsBtn">설정 변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 1/2 ~ 1/40 fraction -> percent/decimal table (rounded: percent to 2 decimals,
+  // decimal to 4 decimals), matching the printable conversion-table worksheet.
+  const RATIO_DATA = {
+    2: ["50%", "0.5"], 3: ["33.33%", "0.3333"], 4: ["25%", "0.25"], 5: ["20%", "0.2"],
+    6: ["16.67%", "0.1667"], 7: ["14.29%", "0.1429"], 8: ["12.5%", "0.125"], 9: ["11.11%", "0.1111"],
+    10: ["10%", "0.1"], 11: ["9.09%", "0.0909"], 12: ["8.33%", "0.0833"], 13: ["7.69%", "0.0769"],
+    14: ["7.14%", "0.0714"], 15: ["6.67%", "0.0667"], 16: ["6.25%", "0.0625"], 17: ["5.88%", "0.0588"],
+    18: ["5.56%", "0.0556"], 19: ["5.26%", "0.0526"], 20: ["5%", "0.05"], 21: ["4.76%", "0.0476"],
+    22: ["4.55%", "0.0455"], 23: ["4.35%", "0.0435"], 24: ["4.17%", "0.0417"], 25: ["4%", "0.04"],
+    26: ["3.85%", "0.0385"], 27: ["3.70%", "0.037"], 28: ["3.57%", "0.0357"], 29: ["3.45%", "0.0345"],
+    30: ["3.33%", "0.0333"], 31: ["3.23%", "0.0323"], 32: ["3.13%", "0.0313"], 33: ["3.03%", "0.0303"],
+    34: ["2.94%", "0.0294"], 35: ["2.86%", "0.0286"], 36: ["2.78%", "0.0278"], 37: ["2.70%", "0.027"],
+    38: ["2.63%", "0.0263"], 39: ["2.56%", "0.0256"], 40: ["2.5%", "0.025"],
+  };
+
+  const state = {
+    range: "2-10",
+    direction: "f2r",
+    shuffle: true,
+    deck: [],
+    index: 0,
+    showingAnswer: false,
+  };
+
+  const settingsPanel = document.getElementById("settingsPanel");
+  const cardArea = document.getElementById("cardArea");
+  const donePanel = document.getElementById("donePanel");
+  const card = document.getElementById("card");
+  const cardContent = document.getElementById("cardContent");
+  const cardHint = document.getElementById("cardHint");
+  const progressEl = document.getElementById("progress");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  document.getElementById("rangeChips").addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    document.querySelectorAll("#rangeChips .chip").forEach((c) => c.classList.remove("active"));
+    btn.classList.add("active");
+    state.range = btn.dataset.range;
+  });
+
+  document.getElementById("directionChips").addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    document.querySelectorAll("#directionChips .chip").forEach((c) => c.classList.remove("active"));
+    btn.classList.add("active");
+    state.direction = btn.dataset.dir;
+  });
+
+  document.getElementById("shuffleToggle").addEventListener("change", (e) => {
+    state.shuffle = e.target.checked;
+  });
+
+  function buildDeck() {
+    const [start, end] = state.range.split("-").map(Number);
+    const deck = [];
+    for (let n = start; n <= end; n++) deck.push(n);
+    return state.shuffle ? shuffleArray(deck) : deck;
+  }
+
+  function fractionMarkup(n) {
+    return `<span class="card-fraction"><span class="num">1</span><span class="den">${n}</span></span>`;
+  }
+
+  function renderCard() {
+    const n = state.deck[state.index];
+    const [percent, decimal] = RATIO_DATA[n];
+    const isFront = !state.showingAnswer;
+    const showFraction = (state.direction === "f2r") === isFront;
+
+    card.classList.toggle("is-answer", state.showingAnswer);
+    cardContent.innerHTML = showFraction
+      ? `<span class="card-label">${isFront ? "분수" : "정답 · 분수"}</span>${fractionMarkup(n)}`
+      : `<span class="card-label">${isFront ? "비율" : "정답 · 비율"}</span><span class="card-percent">${percent}</span><span class="card-decimal">${decimal}</span>`;
+
+    cardHint.textContent = state.showingAnswer ? "탭하면 다음 카드로 넘어가요" : "카드를 탭하면 정답이 나와요";
+    progressEl.textContent = `${state.index + 1} / ${state.deck.length}`;
+    prevBtn.disabled = state.index === 0 && !state.showingAnswer;
+  }
+
+  function showDone() {
+    cardArea.hidden = true;
+    donePanel.hidden = false;
+  }
+
+  function advance() {
+    if (state.index >= state.deck.length - 1) {
+      showDone();
+      return;
+    }
+    state.index += 1;
+    state.showingAnswer = false;
+    renderCard();
+  }
+
+  function handleTap() {
+    if (!state.showingAnswer) {
+      state.showingAnswer = true;
+      renderCard();
+    } else {
+      advance();
+    }
+  }
+
+  card.addEventListener("click", handleTap);
+
+  nextBtn.addEventListener("click", () => {
+    if (state.index >= state.deck.length - 1) {
+      showDone();
+      return;
+    }
+    state.index += 1;
+    state.showingAnswer = false;
+    renderCard();
+  });
+
+  prevBtn.addEventListener("click", () => {
+    if (state.showingAnswer) {
+      state.showingAnswer = false;
+      renderCard();
+      return;
+    }
+    if (state.index > 0) {
+      state.index -= 1;
+      state.showingAnswer = false;
+      renderCard();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (cardArea.hidden) return;
+    if (e.code === "Space" || e.code === "Enter") {
+      e.preventDefault();
+      handleTap();
+    } else if (e.code === "ArrowRight") {
+      nextBtn.click();
+    } else if (e.code === "ArrowLeft") {
+      prevBtn.click();
+    }
+  });
+
+  function startSession() {
+    state.deck = buildDeck();
+    state.index = 0;
+    state.showingAnswer = false;
+    settingsPanel.hidden = true;
+    donePanel.hidden = true;
+    cardArea.hidden = false;
+    renderCard();
+  }
+
+  document.getElementById("startBtn").addEventListener("click", startSession);
+  document.getElementById("restartBtn").addEventListener("click", startSession);
+
+  document.getElementById("backToSettingsBtn").addEventListener("click", () => {
+    cardArea.hidden = true;
+    settingsPanel.hidden = false;
+  });
+
+  document.getElementById("changeSettingsBtn").addEventListener("click", () => {
+    donePanel.hidden = true;
+    settingsPanel.hidden = false;
+  });
+</script>
+</body>
+</html>
