@@ -106,6 +106,23 @@
     font-weight: 600;
   }
 
+  .chip-wrong {
+    border-color: #e0554f;
+    color: #c0392b;
+  }
+
+  .chip-wrong.active {
+    background: #e0554f;
+    border-color: #e0554f;
+    color: #fff;
+  }
+
+  .warn-msg {
+    font-size: 12px;
+    color: #c0392b;
+    margin: 8px 0 0;
+  }
+
   .toggle-group {
     display: flex;
     align-items: center;
@@ -263,6 +280,30 @@
     text-align: center;
   }
 
+  .wrong-toggle-btn {
+    margin-top: 12px;
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    min-height: 40px;
+  }
+
+  .wrong-toggle-btn:hover {
+    background: #f8f2f2;
+  }
+
+  .wrong-toggle-btn.marked {
+    background: #e0554f;
+    border-color: #e0554f;
+    color: #fff;
+    font-weight: 600;
+  }
+
   .nav-row {
     width: 100%;
     display: flex;
@@ -338,7 +379,9 @@
         <button class="chip" data-range="21-30">1/21~1/30</button>
         <button class="chip" data-range="31-40">1/31~1/40</button>
         <button class="chip" data-range="2-40">전체(1/2~1/40)</button>
+        <button class="chip chip-wrong" data-range="wrong">❌ 오답만 (<span id="wrongCount">0</span>)</button>
       </div>
+      <p class="warn-msg" id="wrongEmptyMsg" hidden>아직 표시해 둔 오답이 없어요. 카드 풀면서 ❌ 오답 표시를 눌러주세요.</p>
     </div>
     <div>
       <span class="setting-label">방향</span>
@@ -364,6 +407,8 @@
     </div>
     <p class="card-hint" id="cardHint">카드를 탭하면 정답이 나와요</p>
 
+    <button id="wrongToggleBtn" class="wrong-toggle-btn">❌ 오답 표시</button>
+
     <div class="nav-row">
       <button id="prevBtn">← 이전</button>
       <button id="nextBtn" class="primary">다음 →</button>
@@ -383,20 +428,37 @@
 </div>
 
 <script>
-  // 1/2 ~ 1/40 fraction -> percent/decimal table (rounded: percent to 2 decimals,
-  // decimal to 4 decimals), matching the printable conversion-table worksheet.
+  // 1/2 ~ 1/40 fraction -> percent/decimal table. Percent is rounded to 1
+  // decimal place (e.g. 33.3%); the raw decimal keeps its original precision
+  // since that's the actual memorization target (rounding it to 1 place would
+  // collapse most values under 1/10 down to a meaningless "0.1"/"0.0").
   const RATIO_DATA = {
-    2: ["50%", "0.5"], 3: ["33.33%", "0.3333"], 4: ["25%", "0.25"], 5: ["20%", "0.2"],
-    6: ["16.67%", "0.1667"], 7: ["14.29%", "0.1429"], 8: ["12.5%", "0.125"], 9: ["11.11%", "0.1111"],
-    10: ["10%", "0.1"], 11: ["9.09%", "0.0909"], 12: ["8.33%", "0.0833"], 13: ["7.69%", "0.0769"],
-    14: ["7.14%", "0.0714"], 15: ["6.67%", "0.0667"], 16: ["6.25%", "0.0625"], 17: ["5.88%", "0.0588"],
-    18: ["5.56%", "0.0556"], 19: ["5.26%", "0.0526"], 20: ["5%", "0.05"], 21: ["4.76%", "0.0476"],
-    22: ["4.55%", "0.0455"], 23: ["4.35%", "0.0435"], 24: ["4.17%", "0.0417"], 25: ["4%", "0.04"],
-    26: ["3.85%", "0.0385"], 27: ["3.70%", "0.037"], 28: ["3.57%", "0.0357"], 29: ["3.45%", "0.0345"],
-    30: ["3.33%", "0.0333"], 31: ["3.23%", "0.0323"], 32: ["3.13%", "0.0313"], 33: ["3.03%", "0.0303"],
-    34: ["2.94%", "0.0294"], 35: ["2.86%", "0.0286"], 36: ["2.78%", "0.0278"], 37: ["2.70%", "0.027"],
-    38: ["2.63%", "0.0263"], 39: ["2.56%", "0.0256"], 40: ["2.5%", "0.025"],
+    2: ["50%", "0.5"], 3: ["33.3%", "0.3333"], 4: ["25%", "0.25"], 5: ["20%", "0.2"],
+    6: ["16.7%", "0.1667"], 7: ["14.3%", "0.1429"], 8: ["12.5%", "0.125"], 9: ["11.1%", "0.1111"],
+    10: ["10%", "0.1"], 11: ["9.1%", "0.0909"], 12: ["8.3%", "0.0833"], 13: ["7.7%", "0.0769"],
+    14: ["7.1%", "0.0714"], 15: ["6.7%", "0.0667"], 16: ["6.3%", "0.0625"], 17: ["5.9%", "0.0588"],
+    18: ["5.6%", "0.0556"], 19: ["5.3%", "0.0526"], 20: ["5%", "0.05"], 21: ["4.8%", "0.0476"],
+    22: ["4.5%", "0.0455"], 23: ["4.3%", "0.0435"], 24: ["4.2%", "0.0417"], 25: ["4%", "0.04"],
+    26: ["3.8%", "0.0385"], 27: ["3.7%", "0.037"], 28: ["3.6%", "0.0357"], 29: ["3.4%", "0.0345"],
+    30: ["3.3%", "0.0333"], 31: ["3.2%", "0.0323"], 32: ["3.1%", "0.0313"], 33: ["3%", "0.0303"],
+    34: ["2.9%", "0.0294"], 35: ["2.9%", "0.0286"], 36: ["2.8%", "0.0278"], 37: ["2.7%", "0.027"],
+    38: ["2.6%", "0.0263"], 39: ["2.6%", "0.0256"], 40: ["2.5%", "0.025"],
   };
+
+  const WRONG_LIST_KEY = "ratioCardsWrongList";
+
+  function loadWrongSet() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(WRONG_LIST_KEY) || "[]");
+      return new Set(raw.filter((n) => Number.isInteger(n) && n >= 2 && n <= 40));
+    } catch {
+      return new Set();
+    }
+  }
+
+  function saveWrongSet(set) {
+    localStorage.setItem(WRONG_LIST_KEY, JSON.stringify([...set].sort((a, b) => a - b)));
+  }
 
   const state = {
     range: "2-10",
@@ -405,6 +467,7 @@
     deck: [],
     index: 0,
     showingAnswer: false,
+    wrongSet: loadWrongSet(),
   };
 
   const settingsPanel = document.getElementById("settingsPanel");
@@ -416,6 +479,9 @@
   const progressEl = document.getElementById("progress");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
+  const wrongToggleBtn = document.getElementById("wrongToggleBtn");
+  const wrongCountEl = document.getElementById("wrongCount");
+  const wrongEmptyMsg = document.getElementById("wrongEmptyMsg");
 
   function shuffleArray(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -425,12 +491,17 @@
     return arr;
   }
 
+  function refreshWrongCount() {
+    wrongCountEl.textContent = state.wrongSet.size;
+  }
+
   document.getElementById("rangeChips").addEventListener("click", (e) => {
     const btn = e.target.closest(".chip");
     if (!btn) return;
     document.querySelectorAll("#rangeChips .chip").forEach((c) => c.classList.remove("active"));
     btn.classList.add("active");
     state.range = btn.dataset.range;
+    wrongEmptyMsg.hidden = true;
   });
 
   document.getElementById("directionChips").addEventListener("click", (e) => {
@@ -446,9 +517,14 @@
   });
 
   function buildDeck() {
-    const [start, end] = state.range.split("-").map(Number);
-    const deck = [];
-    for (let n = start; n <= end; n++) deck.push(n);
+    let deck;
+    if (state.range === "wrong") {
+      deck = [...state.wrongSet];
+    } else {
+      const [start, end] = state.range.split("-").map(Number);
+      deck = [];
+      for (let n = start; n <= end; n++) deck.push(n);
+    }
     return state.shuffle ? shuffleArray(deck) : deck;
   }
 
@@ -470,6 +546,10 @@
     cardHint.textContent = state.showingAnswer ? "탭하면 다음 카드로 넘어가요" : "카드를 탭하면 정답이 나와요";
     progressEl.textContent = `${state.index + 1} / ${state.deck.length}`;
     prevBtn.disabled = state.index === 0 && !state.showingAnswer;
+
+    const isWrong = state.wrongSet.has(n);
+    wrongToggleBtn.textContent = isWrong ? "✓ 오답 해제" : "❌ 오답 표시";
+    wrongToggleBtn.classList.toggle("marked", isWrong);
   }
 
   function showDone() {
@@ -534,7 +614,13 @@
   });
 
   function startSession() {
-    state.deck = buildDeck();
+    const deck = buildDeck();
+    if (deck.length === 0) {
+      wrongEmptyMsg.hidden = false;
+      return;
+    }
+    wrongEmptyMsg.hidden = true;
+    state.deck = deck;
     state.index = 0;
     state.showingAnswer = false;
     settingsPanel.hidden = true;
@@ -545,6 +631,20 @@
 
   document.getElementById("startBtn").addEventListener("click", startSession);
   document.getElementById("restartBtn").addEventListener("click", startSession);
+
+  wrongToggleBtn.addEventListener("click", () => {
+    const n = state.deck[state.index];
+    if (state.wrongSet.has(n)) {
+      state.wrongSet.delete(n);
+    } else {
+      state.wrongSet.add(n);
+    }
+    saveWrongSet(state.wrongSet);
+    refreshWrongCount();
+    renderCard();
+  });
+
+  refreshWrongCount();
 
   document.getElementById("backToSettingsBtn").addEventListener("click", () => {
     cardArea.hidden = true;
