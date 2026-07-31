@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>곱셈 대소 비교 연습</title>
+<style>
+  :root {
+    --border: #d0d0d0;
+    --text: #222;
+    --muted: #777;
+    --accent: #2f6fed;
+    --bg: #f4f5f7;
+    --good: #2e9e5b;
+    --bad: #c0392b;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+    color: var(--text);
+    margin: 0;
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100%;
+    padding: 16px 16px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  header h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .back-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .back-link:hover {
+    color: var(--accent);
+  }
+
+  /* Settings panel */
+
+  .settings {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .setting-label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    min-height: 36px;
+  }
+
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .difficulty-note {
+    font-size: 12px;
+    color: var(--muted);
+    background: #f4f5f7;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    line-height: 1.5;
+  }
+
+  .start-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  .start-btn:hover {
+    background: #2559c9;
+  }
+
+  /* Compare area */
+
+  .compare-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 14px;
+  }
+
+  .topbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .settings-link {
+    font-size: 12px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 0;
+  }
+
+  .settings-link:hover {
+    color: var(--accent);
+  }
+
+  .progress, .score {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .prompt {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 4px 0 12px;
+  }
+
+  .compare-row {
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .compare-box {
+    flex: 1;
+    min-height: 130px;
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 8px;
+    cursor: pointer;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .compare-box:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .compare-box:disabled {
+    cursor: default;
+  }
+
+  .compare-expr {
+    font-size: clamp(18px, 6vw, 24px);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .compare-value {
+    font-size: clamp(13px, 4vw, 15px);
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .compare-box.is-correct {
+    border-color: var(--good);
+    background: #f1fbf5;
+  }
+
+  .compare-box.is-correct .compare-value {
+    color: var(--good);
+  }
+
+  .vs-label {
+    align-self: center;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .feedback {
+    text-align: center;
+    margin-top: 14px;
+  }
+
+  .feedback-result {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+
+  .feedback-result.correct {
+    color: var(--good);
+  }
+
+  .feedback-result.wrong {
+    color: var(--bad);
+  }
+
+  .feedback-time {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .next-btn {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 46px;
+  }
+
+  .next-btn:hover {
+    background: #2559c9;
+  }
+
+  /* Summary panel */
+
+  .summary-panel {
+    text-align: center;
+    padding: 10px 0;
+  }
+
+  .summary-panel h2 {
+    margin: 0 0 4px;
+  }
+
+  .summary-stats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 18px 0;
+  }
+
+  .stat-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    min-width: 78px;
+    flex: 1 1 78px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .nav-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .nav-row button {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  .nav-row button:hover {
+    background: #eee;
+  }
+
+  .nav-row button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .nav-row button.primary:hover {
+    background: #2559c9;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (max-width: 340px) {
+    .compare-expr { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>곱셈 대소 비교 연습</h1>
+    <a class="back-link" href="index.html">← 연습지 생성기</a>
+  </header>
+
+  <div class="settings" id="settingsPanel">
+    <div>
+      <span class="setting-label">자릿수 유형</span>
+      <div class="chip-row" id="modeChips">
+        <button class="chip" data-mode="2x2">2자리 × 2자리</button>
+        <button class="chip" data-mode="3x3">3자리 × 3자리</button>
+        <button class="chip" data-mode="mixed">3자리 × 2자리 혼합</button>
+        <button class="chip active" data-mode="all">전체 랜덤</button>
+      </div>
+    </div>
+    <div>
+      <span class="setting-label">문제 수</span>
+      <div class="chip-row" id="countChips">
+        <button class="chip active" data-count="0">무제한</button>
+        <button class="chip" data-count="10">10문제</button>
+        <button class="chip" data-count="20">20문제</button>
+        <button class="chip" data-count="30">30문제</button>
+      </div>
+    </div>
+    <p class="difficulty-note">난이도: 중상 고정 — 자리별로 한쪽이 무조건 크거나(요소별 지배), 두 수 중 가장 큰 값 두 개가 한쪽에 몰린 경우는 제외하고, 두 곱의 비율이 1.3배 이내로 가까운 문제만 나와요.</p>
+    <button class="start-btn" id="startBtn">시작하기</button>
+  </div>
+
+  <div class="compare-area" id="compareArea" hidden>
+    <div class="topbar">
+      <button class="settings-link" id="backToSettingsBtn">⚙ 설정 변경</button>
+      <span class="progress" id="progress">1 / 10</span>
+      <span class="score" id="scoreDisplay">정답 0/0</span>
+      <button class="settings-link" id="stopBtn">🏁 종료</button>
+    </div>
+    <p class="prompt">더 큰 식을 선택하세요</p>
+    <div class="compare-row">
+      <button class="compare-box" id="boxL" data-side="L"></button>
+      <span class="vs-label">VS</span>
+      <button class="compare-box" id="boxR" data-side="R"></button>
+    </div>
+    <div class="feedback" id="feedback" hidden>
+      <p class="feedback-result" id="feedbackResult"></p>
+      <p class="feedback-time" id="feedbackTime"></p>
+    </div>
+    <button class="next-btn" id="nextBtn" hidden>다음 문제 →</button>
+  </div>
+
+  <div class="compare-area" id="summaryPanel" hidden>
+    <div class="summary-panel">
+      <h2>수고했어요! 🎉</h2>
+      <div class="summary-stats">
+        <div class="stat-box">
+          <div class="stat-value" id="summaryCount">0</div>
+          <div class="stat-label">푼 문제 수</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="summaryAccuracy">0%</div>
+          <div class="stat-label">정답률</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="summaryAvgTime">0.0초</div>
+          <div class="stat-label">평균 풀이 시간</div>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button id="restartBtn" class="primary">다시 하기</button>
+        <button id="changeSettingsBtn">설정 변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function randomOperand(digits) {
+    const min = 10 ** (digits - 1);
+    const max = 10 ** digits - 1;
+    return randomInt(min, max);
+  }
+
+  // Rejects numbers that make mental multiplication too easy (trailing zero, repeated digit).
+  function isTooEasyOperand(n) {
+    if (n % 10 === 0) return true;
+    return new Set(String(n)).size === 1;
+  }
+
+  function randomMeaningfulOperand(digits) {
+    let n;
+    let attempts = 0;
+    do {
+      n = randomOperand(digits);
+      attempts++;
+    } while (isTooEasyOperand(n) && attempts < 50);
+    return n;
+  }
+
+  // Element-wise dominance (both left factors >= or <= their right counterparts) is
+  // always "obvious" — readable without multiplying at all.
+  function isPositionDominant(la, lb, ra, rb) {
+    return (la >= ra && lb >= rb) || (la <= ra && lb <= rb);
+  }
+
+  // The two largest of the four numbers both sitting on the same side is also "obvious"
+  // (e.g. 196x104 vs 185x103 has 196 and 185 — the top two — effectively on one side).
+  function isTopTwoSameSide(la, lb, ra, rb) {
+    const tagged = [
+      [la, "L"], [lb, "L"], [ra, "R"], [rb, "R"],
+    ].sort((x, y) => y[0] - x[0]);
+    return tagged[0][1] === tagged[1][1];
+  }
+
+  const MAX_RATIO = 1.3; // keeps every problem a genuine "have to calculate" call
+  const MAX_ATTEMPTS = 800;
+
+  const DIGIT_MODES = {
+    "2x2": [[2, 2], [2, 2]],
+    "3x3": [[3, 3], [3, 3]],
+    mixed: [[2, 3], [2, 3]],
+  };
+
+  function pickDigitsForMode(mode) {
+    if (mode === "all") {
+      const keys = Object.keys(DIGIT_MODES);
+      mode = keys[randomInt(0, keys.length - 1)];
+    }
+    return DIGIT_MODES[mode];
+  }
+
+  function generateProblem(mode) {
+    const [leftDigits, rightDigits] = pickDigitsForMode(mode);
+    let la, lb, ra, rb, left, right;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      la = randomMeaningfulOperand(leftDigits[0]);
+      lb = randomMeaningfulOperand(leftDigits[1]);
+      ra = randomMeaningfulOperand(rightDigits[0]);
+      rb = randomMeaningfulOperand(rightDigits[1]);
+      left = la * lb;
+      right = ra * rb;
+      if (left === right) continue;
+      if (isPositionDominant(la, lb, ra, rb)) continue;
+      if (isTopTwoSameSide(la, lb, ra, rb)) continue;
+      if (Math.max(left, right) / Math.min(left, right) > MAX_RATIO) continue;
+      return { la, lb, ra, rb, left, right, correct: left > right ? "L" : "R" };
+    }
+    return { la, lb, ra, rb, left, right, correct: left >= right ? "L" : "R" };
+  }
+
+  function formatNumber(n) {
+    return n.toLocaleString("en-US");
+  }
+
+  // count: 0 means "unlimited" (no fixed session length, ended manually via 종료).
+  const state = {
+    mode: "all",
+    count: 0,
+    index: 0,
+    correct: 0,
+    times: [],
+    current: null,
+    shownAt: 0,
+    answered: false,
+  };
+
+  const settingsPanel = document.getElementById("settingsPanel");
+  const compareArea = document.getElementById("compareArea");
+  const summaryPanel = document.getElementById("summaryPanel");
+  const progressEl = document.getElementById("progress");
+  const scoreDisplay = document.getElementById("scoreDisplay");
+  const boxL = document.getElementById("boxL");
+  const boxR = document.getElementById("boxR");
+  const feedback = document.getElementById("feedback");
+  const feedbackResult = document.getElementById("feedbackResult");
+  const feedbackTime = document.getElementById("feedbackTime");
+  const nextBtn = document.getElementById("nextBtn");
+
+  document.getElementById("modeChips").addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    document.querySelectorAll("#modeChips .chip").forEach((c) => c.classList.remove("active"));
+    btn.classList.add("active");
+    state.mode = btn.dataset.mode;
+  });
+
+  document.getElementById("countChips").addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    document.querySelectorAll("#countChips .chip").forEach((c) => c.classList.remove("active"));
+    btn.classList.add("active");
+    state.count = Number(btn.dataset.count);
+  });
+
+  function renderBox(el, la, lb) {
+    el.innerHTML = `<span class="compare-expr">${formatNumber(la)} × ${formatNumber(lb)}</span>`;
+  }
+
+  function showProblem() {
+    state.current = generateProblem(state.mode);
+    state.answered = false;
+    renderBox(boxL, state.current.la, state.current.lb);
+    renderBox(boxR, state.current.ra, state.current.rb);
+    boxL.className = "compare-box";
+    boxR.className = "compare-box";
+    boxL.disabled = false;
+    boxR.disabled = false;
+    feedback.hidden = true;
+    nextBtn.hidden = true;
+    progressEl.textContent = state.count === 0 ? `문제 ${state.index + 1}` : `${state.index + 1} / ${state.count}`;
+    scoreDisplay.textContent = `정답 ${state.correct}/${state.index}`;
+    state.shownAt = performance.now();
+  }
+
+  function handleChoice(side) {
+    if (state.answered) return;
+    state.answered = true;
+    const elapsed = (performance.now() - state.shownAt) / 1000;
+    state.times.push(elapsed);
+
+    const { correct, la, lb, ra, rb, left, right } = state.current;
+    const isCorrect = side === correct;
+    if (isCorrect) state.correct += 1;
+
+    boxL.disabled = true;
+    boxR.disabled = true;
+    if (correct === "L") boxL.classList.add("is-correct");
+    if (correct === "R") boxR.classList.add("is-correct");
+    renderBox(boxL, la, lb);
+    boxL.insertAdjacentHTML("beforeend", `<span class="compare-value">${formatNumber(left)}</span>`);
+    renderBox(boxR, ra, rb);
+    boxR.insertAdjacentHTML("beforeend", `<span class="compare-value">${formatNumber(right)}</span>`);
+
+    feedback.hidden = false;
+    feedbackResult.textContent = isCorrect ? "정답이에요! 🎉" : "아쉬워요, 오답이에요";
+    feedbackResult.className = `feedback-result ${isCorrect ? "correct" : "wrong"}`;
+    feedbackTime.textContent = `풀이 시간: ${elapsed.toFixed(1)}초`;
+    scoreDisplay.textContent = `정답 ${state.correct}/${state.index + 1}`;
+
+    nextBtn.hidden = false;
+  }
+
+  boxL.addEventListener("click", () => handleChoice("L"));
+  boxR.addEventListener("click", () => handleChoice("R"));
+
+  nextBtn.addEventListener("click", () => {
+    state.index += 1;
+    if (state.count !== 0 && state.index >= state.count) {
+      showSummary();
+    } else {
+      showProblem();
+    }
+  });
+
+  document.getElementById("stopBtn").addEventListener("click", () => {
+    showSummary();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (compareArea.hidden) return;
+    if (e.code === "ArrowLeft") {
+      e.preventDefault();
+      if (!state.answered) handleChoice("L");
+    } else if (e.code === "ArrowRight") {
+      e.preventDefault();
+      if (!state.answered) handleChoice("R");
+    } else if ((e.code === "Space" || e.code === "Enter") && state.answered) {
+      e.preventDefault();
+      nextBtn.click();
+    }
+  });
+
+  function showSummary() {
+    compareArea.hidden = true;
+    summaryPanel.hidden = false;
+    const attempted = state.times.length;
+    const accuracy = attempted === 0 ? 0 : Math.round((state.correct / attempted) * 100);
+    const avgTime = attempted === 0 ? 0 : state.times.reduce((a, b) => a + b, 0) / attempted;
+    document.getElementById("summaryCount").textContent = attempted;
+    document.getElementById("summaryAccuracy").textContent = `${accuracy}%`;
+    document.getElementById("summaryAvgTime").textContent = `${avgTime.toFixed(1)}초`;
+  }
+
+  function startSession() {
+    state.index = 0;
+    state.correct = 0;
+    state.times = [];
+    settingsPanel.hidden = true;
+    summaryPanel.hidden = true;
+    compareArea.hidden = false;
+    showProblem();
+  }
+
+  document.getElementById("startBtn").addEventListener("click", startSession);
+  document.getElementById("restartBtn").addEventListener("click", startSession);
+
+  document.getElementById("backToSettingsBtn").addEventListener("click", () => {
+    compareArea.hidden = true;
+    settingsPanel.hidden = false;
+  });
+
+  document.getElementById("changeSettingsBtn").addEventListener("click", () => {
+    summaryPanel.hidden = true;
+    settingsPanel.hidden = false;
+  });
+</script>
+</body>
+</html>
